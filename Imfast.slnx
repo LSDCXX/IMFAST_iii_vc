@@ -1,0 +1,18 @@
+﻿<Solution Description="ImFast" Version="1.4">
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <Platform Name="GTA-VC" />
+    <Platform Name="GTA3" />
+  </Configurations>
+  <Project Path="Imfast.vcxproj" Id="29A415BA-1546-4090-FE00-54E4EA41C7E0">
+    <BuildType Solution="Debug|GTA-VC" Project="Debug GTA-VC" />
+    <BuildType Solution="Release|GTA-VC" Project="Release GTA-VC" />
+    <BuildType Solution="Debug|GTA3" Project="Debug GTA3" />
+    <BuildType Solution="Release|GTA3" Project="Release GTA3" />
+    <Platform Solution="Debug|GTA-VC" Project="Win32" />
+    <Platform Solution="Release|GTA-VC" Project="Win32" />
+    <Platform Solution="Debug|GTA3" Project="Win32" />
+    <Platform Solution="Release|GTA3" Project="Win32" />
+  </Project>
+</Solution>
