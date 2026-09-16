@@ -113,19 +113,32 @@ static bool ReadConfigINI()
     return bEnable;
 }
 
+static bool DirExists(const char* path)
+{
+    const DWORD a = GetFileAttributesA(path);
+    return a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY);
+}
+
 static bool ResolveUserFilesDir(char* out, size_t n)
 {
     char docs[MAX_PATH] = {};
-    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, docs)))
-    {
-        _snprintf(out, n, "%s\\GTA3 User Files", docs);
-        if (GetFileAttributesA(out) != INVALID_FILE_ATTRIBUTES) return true;
-    }
     char gameDir[MAX_PATH] = {};
     GetModuleFileNameA(NULL, gameDir, MAX_PATH);
     if (char* s = strrchr(gameDir, '\\')) *s = 0;
+
+    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, docs)))
+    {
+        _snprintf(out, n, "%s\\GTA3 User Files", docs);
+        if (DirExists(out)) return true;
+    }
+
     _snprintf(out, n, "%s\\GTA3 User Files", gameDir);
-    if (GetFileAttributesA(out) != INVALID_FILE_ATTRIBUTES) return true;
+    if (DirExists(out)) return true;
+
+    // GTA-LC + portablegta.asi keep saves under <game>\userfiles
+    _snprintf(out, n, "%s\\userfiles", gameDir);
+    if (DirExists(out)) return true;
+
     _snprintf(out, n, "%s", gameDir[0] ? gameDir : ".");
     return false;
 }
@@ -167,7 +180,7 @@ static void ArmAutoLoad()
 {
     if (!bAutoLoad || sLoadRequested) return;
 
-    if (GetAsyncKeyState(vkAvoidLoad) & 0xF000)
+    if (GetAsyncKeyState(vkAvoidLoad) & 0x8000)
     {
         Log("autoload cancelled");
         sLoadRequested = true;
@@ -207,6 +220,15 @@ static void IntroSwitchHook(injector::reg_pack& regs)
 
 static int sLastSeenSlot = -999;
 
+static bool SaveFileExists(int slot)
+{
+    if (slot < 0) return false;
+    char dir[MAX_PATH] = {}, save[MAX_PATH] = {};
+    ResolveUserFilesDir(dir, sizeof(dir));
+    _snprintf(save, sizeof(save), "%s\\GTA3sf%d.b", dir, slot + 1);
+    return GetFileAttributesA(save) != INVALID_FILE_ATTRIBUTES;
+}
+
 static void OnGameProcess()
 {
     if (!bDetectSave) return;
@@ -214,7 +236,8 @@ static void OnGameProcess()
     if (slot == sLastSeenSlot) return;
     if (!FrontEndMenuManager.m_bMenuActive
         && FrontEndMenuManager.m_bGameNotLoaded == false
-        && slot >= 0)
+        && slot >= 0
+        && SaveFileExists(slot))
     {
         sLastSeenSlot = slot;
         RegisterLastSlot(slot);
